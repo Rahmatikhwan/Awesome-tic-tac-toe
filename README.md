@@ -44,7 +44,7 @@ A beautiful, feature-rich Tic Tac Toe game with stunning visuals, background mus
 
 ## 🌐 Play Online
 
-Visit the live version at: `https://Rahmatikhwan.github.io/Awesome-tic-tac-toe/`
+Visit the live version at: `https://rahmatikhwan.github.io/Awesome-tic-tac-toe/`
 
 ## 📱 Mobile Friendly
 
@@ -80,7 +80,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🔗 Share with Friends
 
 Copy and share this link with your friends to play together:
-`https://Rahmatikhwan.github.io/Awesome-tic-tac-toe/`
+`https://rahmatikhwan.github.io/Awesome-tic-tac-toe/`
 
 ---
 
