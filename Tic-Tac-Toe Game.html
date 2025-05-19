@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beautiful Tic Tac Toe</title>
+  <style>
+    /* Same as before */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #6a11cb, #2575fc);
+      background-size: 400% 400%;
+      animation: gradientBG 10s ease infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    h1 {
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      position: relative;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #ffffff22, #ffffff11);
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    .cell {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 3px solid white;
+      font-size: 2.5em;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, background-color 0.3s ease;
+      position: relative;
+      border-radius: 10px;
+    }
+
+    .cell:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    .cell span {
+      opacity: 0;
+      transform: scale(0.6);
+      transition: all 0.3s ease;
+    }
+
+    .cell.filled span {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      background-color: white;
+      color: #2575fc;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #f0f0f0;
+    }
+
+    .win-line {
+      position: absolute;
+      background-color: red;
+      height: 6px;
+      z-index: 10;
+      width: 0;
+      left: 0;
+      top: 0;
+      transform-origin: left center;
+      animation: drawLine 0.6s ease forwards;
+    }
+
+    @keyframes drawLine {
+      from { width: 0; }
+      to { width: var(--line-length); }
+    }
+
+    .x span {
+      color: red;
+    }
+
+    .o span {
+      color: blue;
+    }
+
+    select {
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: none;
+    }
+
+    /* Music Controls Styling */
+    .music-controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .music-controls button {
+      margin: 5px;
+      padding: 8px 12px;
+      font-size: 0.9em;
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      gap: 10px;
+    }
+
+    .volume-control input[type="range"] {
+      width: 100px;
+    }
+
+    .music-info {
+      text-align: center;
+      font-size: 0.8em;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
+    /* Responsive design for mobile */
+    @media (max-width: 768px) {
+      .music-controls {
+        position: static;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tic Tac Toe</h1>
+
+  <!-- Music Controls -->
+  <div class="music-controls">
+    <div class="music-info">🎵 Background Music</div>
+    <button id="playPauseBtn" onclick="toggleMusic()">▶️ Play</button>
+    <button onclick="nextTrack()">⏭️ Next</button>
+    <div class="volume-control">
+      <span>🔊</span>
+      <input type="range" id="volumeSlider" min="0" max="100" value="50" onchange="changeVolume()">
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+  <div class="status" id="status">Player X's turn</div>
+
+  <div class="controls">
+    <button onclick="resetGame()">Reset Game</button>
+    <button onclick="startTwoPlayer()">2 Players</button>
+    <button onclick="toggleAIMenu()">Play vs AI</button>
+  </div>
+
+  <div id="aiMenu" style="display:none; margin-top:10px;">
+    <select id="difficultySelect">
+      <option value="easy">Easy</option>
+      <option value="normal">Normal</option>
+      <option value="hard">Hard</option>
+      <option value="extreme">Extreme</option>
+    </select>
+    <button onclick="startAI()">Start AI Game</button>
+  </div>
+
+  <!-- Audio Files -->
+  <audio id="clickSound" preload="auto">
+    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+  </audio>
+  
+  <audio id="winSound" preload="auto">
+    <source src="https://www.soundjay.com/human/sounds/applause-01.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Background Music Playlist -->
+  <audio id="backgroundMusic" loop preload="auto">
+    <source src="https://www.bensound.com/bensound-music/bensound-ukulele.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const board = document.getElementById('board');
+    const statusText = document.getElementById('status');
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    
+    let currentPlayer = 'X';
+    let gameActive = true;
+    let gameState = ["", "", "", "", "", "", "", "", ""];
+    let winLine = null;
+    let isAI = false;
+    let aiDifficulty = "easy";
+    let isPlaying = false;
+    let currentTrackIndex = 0;
+
+    // Music playlist (you can add more tracks here)
+    const musicTracks = [
+      "https://www.bensound.com/bensound-music/bensound-ukulele.mp3",
+      "https://www.bensound.com/bensound-music/bensound-sunny.mp3",
+      "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3",
+      "https://www.bensound.com/bensound-music/bensound-memories.mp3"
+    ];
+
+    const winningConditions = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+    // Music Functions
+    function toggleMusic() {
+      if (isPlaying) {
+        backgroundMusic.pause();
+        playPauseBtn.innerHTML = "▶️ Play";
+        isPlaying = false;
+      } else {
+        backgroundMusic.play().catch(e => {
+          console.log("Auto-play was prevented:", e);
+          // Show a message to user about clicking to enable audio
+        });
+        playPauseBtn.innerHTML = "⏸️ Pause";
+        isPlaying = true;
+      }
+    }
+
+    function nextTrack() {
+      currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+      backgroundMusic.src = musicTracks[currentTrackIndex];
+      if (isPlaying) {
+        backgroundMusic.play();
+      }
+    }
+
+    function changeVolume() {
+      const volume = volumeSlider.value / 100;
+      backgroundMusic.volume = volume;
+      document.getElementById('clickSound').volume = volume;
+      document.getElementById('winSound').volume = volume;
+    }
+
+    // Initialize music settings
+    backgroundMusic.volume = 0.5;
+    backgroundMusic.addEventListener('ended', nextTrack);
+
+    // Game Functions (same as before)
+    function playClickSound() {
+      const sound = document.getElementById("clickSound");
+      sound.currentTime = 0;
+      sound.play().catch(e => console.log("Sound play failed:", e));
+    }
+
+    function playWinSound() {
+      const sound = document.getElementById("winSound");
+      sound.currentTime = 0;
+      sound.play().catch(e => console.log("Sound play failed:", e));
+    }
+
+    function handleCellClick(e) {
+      if (!gameActive || gameState[parseInt(e.target.dataset.index)] !== "") return;
+
+      makeMove(parseInt(e.target.dataset.index));
+      playClickSound();
+
+      if (checkWin()) {
+        endGame(`Player ${currentPlayer} wins!`);
+        playWinSound();
+        return;
+      }
+
+      if (!gameState.includes("")) {
+        endGame("It's a draw!");
+        return;
+      }
+
+      switchPlayer();
+
+      if (isAI && currentPlayer === "O") {
+        setTimeout(aiMove, 500);
+      }
+    }
+
+    function makeMove(index) {
+      gameState[index] = currentPlayer;
+      const cell = document.querySelector(`[data-index='${index}']`);
+      const span = document.createElement('span');
+      span.textContent = currentPlayer;
+      span.className = currentPlayer === "X" ? "x" : "o";
+      cell.innerHTML = '';
+      cell.appendChild(span);
+      cell.classList.add('filled');
+    }
+
+    function checkWin() {
+      return winningConditions.some(condition => {
+        const [a, b, c] = condition;
+        return gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c];
+      });
+    }
+
+    function switchPlayer() {
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      statusText.textContent = `Player ${currentPlayer}'s turn`;
+    }
+
+    function endGame(message) {
+      statusText.textContent = message;
+      gameActive = false;
+      drawPerfectWinningLine();
+    }
+
+    function resetGame() {
+      if (winLine) winLine.remove();
+      winLine = null;
+      gameState = ["", "", "", "", "", "", "", "", ""];
+      currentPlayer = "X";
+      gameActive = true;
+      statusText.textContent = `Player ${currentPlayer}'s turn`;
+      Array.from(document.querySelectorAll('.cell')).forEach(cell => {
+        cell.innerHTML = '';
+        cell.classList.remove('filled');
+      });
+    }
+
+    function startTwoPlayer() {
+      isAI = false;
+      resetGame();
+    }
+
+    function toggleAIMenu() {
+      const menu = document.getElementById('aiMenu');
+      menu.style.display = menu.style.display === 'none' ? 'inline-block' : 'none';
+    }
+
+    function startAI() {
+      aiDifficulty = document.getElementById('difficultySelect').value;
+      isAI = true;
+      resetGame();
+      if (currentPlayer === "O") setTimeout(aiMove, 500);
+    }
+
+    function aiMove() {
+      let index;
+
+      if (aiDifficulty === "easy") {
+        index = randomEmptyIndex();
+      } else if (aiDifficulty === "normal") {
+        index = findBestMove("O");
+      } else if (aiDifficulty === "hard") {
+        index = minimax(gameState, "O").index;
+      } else if (aiDifficulty === "extreme") {
+        index = perfectMove();
+      }
+
+      if (index !== undefined) {
+        makeMove(index);
+        playClickSound();
+
+        if (checkWin()) {
+          endGame("Player O wins!");
+          playWinSound();
+          return;
+        }
+        if (!gameState.includes("")) {
+          endGame("It's a draw!");
+          return;
+        }
+        switchPlayer();
+      }
+    }
+
+    function randomEmptyIndex() {
+      const empty = gameState.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+      return empty[Math.floor(Math.random() * empty.length)];
+    }
+
+    function findBestMove(player) {
+      for (let cond of winningConditions) {
+        let [a, b, c] = cond;
+        let values = [gameState[a], gameState[b], gameState[c]];
+        if (values.filter(x => x === player).length === 2 && values.includes("")) {
+          return cond[values.indexOf("")];
+        }
+      }
+      return randomEmptyIndex();
+    }
+
+    function perfectMove() {
+      return minimax(gameState, "O").index;
+    }
+
+    function minimax(newBoard, player) {
+      let availSpots = newBoard.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+
+      if (checkWinFor(newBoard, "X")) return { score: -10 };
+      if (checkWinFor(newBoard, "O")) return { score: 10 };
+      if (availSpots.length === 0) return { score: 0 };
+
+      let moves = [];
+
+      for (let i = 0; i < availSpots.length; i++) {
+        let move = {};
+        move.index = availSpots[i];
+        newBoard[availSpots[i]] = player;
+
+        if (player === "O") {
+          let result = minimax(newBoard, "X");
+          move.score = result.score;
+        } else {
+          let result = minimax(newBoard, "O");
+          move.score = result.score;
+        }
+
+        newBoard[availSpots[i]] = "";
+        moves.push(move);
+      }
+
+      let bestMove;
+      if (player === "O") {
+        let bestScore = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score > bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score < bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      }
+
+      return moves[bestMove];
+    }
+
+    function checkWinFor(board, player) {
+      return winningConditions.some(condition => {
+        const [a, b, c] = condition;
+        return board[a] === player && board[a] === board[b] && board[a] === board[c];
+      });
+    }
+
+    function drawPerfectWinningLine() {
+      const cells = document.querySelectorAll('.cell');
+      for (const condition of winningConditions) {
+        const [a, b, c] = condition;
+        if (
+          gameState[a] &&
+          gameState[a] === gameState[b] &&
+          gameState[a] === gameState[c]
+        ) {
+          const start = cells[a].getBoundingClientRect();
+          const end = cells[c].getBoundingClientRect();
+          const boardRect = board.getBoundingClientRect();
+
+          const x1 = start.left - boardRect.left + start.width / 2;
+          const y1 = start.top - boardRect.top + start.height / 2;
+          const x2 = end.left - boardRect.left + end.width / 2;
+          const y2 = end.top - boardRect.top + end.height / 2;
+
+          const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+          const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+
+          winLine = document.createElement('div');
+          winLine.classList.add('win-line');
+          winLine.style.setProperty('--line-length', `${length}px`);
+          winLine.style.transform = `translate(${x1}px, ${y1}px) rotate(${angle}deg)`;
+          board.appendChild(winLine);
+          break;
+        }
+      }
+    }
+
+    function createBoard() {
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.setAttribute("data-index", i);
+        cell.addEventListener("click", handleCellClick);
+        board.appendChild(cell);
+      }
+    }
+
+    // Auto-start music when page loads (with user gesture fallback)
+    window.addEventListener('load', () => {
+      // Try to auto-play music (might be blocked by browser)
+      backgroundMusic.play().then(() => {
+        isPlaying = true;
+        playPauseBtn.innerHTML = "⏸️ Pause";
+      }).catch(() => {
+        // Auto-play was prevented, music will start when user clicks play
+        console.log("Auto-play prevented. User must click to start music.");
+      });
+    });
+
+    createBoard();
+  </script>
+
+</body>
+</html>
